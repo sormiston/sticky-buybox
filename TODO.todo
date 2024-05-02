@@ -1,0 +1,8 @@
+Presentational MVP:
+    ☐ Finish container styling
+    ☐ Prepare "below the fold" conditions on page
+    ☐ Implement the solution
+
+Going Beyond:
+    ☐ mock async fetching for content / jaggy page load conditions
+    ☐ some height-adjusting state in Col B
