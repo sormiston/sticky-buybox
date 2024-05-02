@@ -1,26 +1,90 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import "./App.scss";
 
 function App() {
+  // STATE
   const [showSentinels, setShowSentinels] = useState(false);
+  const [colBPosition, setColBPosition] = useState<
+    "sticky" | "relative" | "static"
+  >("static");
+  const [colBTop, setColBTop] = useState("0px");
+  const [scrollDirection, setScrollDirection] = useState<"up" | "down">("down");
+  const [downScrollIO, setDownScrollIO] =
+    useState<IntersectionObserver | null>();
+  const [upScrollIO, setUpScrollIO] = useState<IntersectionObserver | null>();
+
+  // REFS
+  const container = useRef<HTMLDivElement>(null);
+  const colB = useRef<HTMLDivElement>(null);
+  const topSentinel = useRef<HTMLDivElement>(null);
+  const bottomSentinel = useRef<HTMLDivElement>(null);
+
+  // IO CALLBACK
+  const stickOrScroll = (entries: IntersectionObserverEntry[]) => {
+    entries.forEach((entry) => {
+      if (!container.current || !colB.current) return;
+      const isScrolledPastFold =
+        container.current.getBoundingClientRect().bottom < 0;
+      if (!entry.isIntersecting && !isScrolledPastFold) {
+        // stick
+        setColBPosition("sticky");
+        setColBTop(
+          scrollDirection === "up"
+            ? `${Math.min(entry.boundingClientRect.top, 175)}px` // disallow top of buybox to lag more than 175px behind viewport
+            : `${entry.boundingClientRect.top}px`
+        );
+      } else {
+        // scroll
+        setColBPosition("relative");
+        setColBTop(
+          `${
+            -1 *
+            (container.current.getBoundingClientRect().top -
+              entry.boundingClientRect.top)
+          }px`
+        );
+      }
+    });
+  };
+
+  // IO INSTANTIATION
+  useEffect(() => {
+    if (topSentinel.current && bottomSentinel.current) {
+      setDownScrollIO(
+        new IntersectionObserver(stickOrScroll, {
+          root: topSentinel.current,
+        })
+      );
+      setUpScrollIO(
+        new IntersectionObserver(stickOrScroll, {
+          root: bottomSentinel.current,
+        })
+      );
+    } else {
+      console.error("missing refs!!");
+    }
+  }, []);
+
+  // SCROLL LISTENER FOR DIRECTION
+  let lastScrollTop = window.scrollY;
+  window.addEventListener("scroll", () => {
+    setScrollDirection(window.scrollY > lastScrollTop ? "down" : "up");
+    lastScrollTop = window.scrollY;
+  });
 
   return (
     <>
-      <header>
-        <h1 className="h1">2 Column Synchronized Scroll Container</h1>
+      <header style={{ opacity: showSentinels ? "0.15" : "1" }}>
+        <h1 className="h1">2-Column Synchronized Scroll Container</h1>
       </header>
       <main>
-        <div className="container">
-          <div
-            className={`sentinel sentinel--top ${
-              showSentinels ? "sentinel--show" : ""
-            }`}
-          ></div>
+        <div className="container" ref={container}>
           <div className="col colA">
             <h2 className="colA__start">Col A Start</h2>
             <span className="colA__foot">Col A Foot</span>
           </div>
-          <div className="col colB">
+
+          <div className="col colB" ref={colB}>
             <h2 className="colB__start">Col B Start</h2>
             <hr />
             <p className="colB__content">
@@ -57,11 +121,6 @@ function App() {
             <hr />
             <span className="colB__foot">Col B Foot</span>
           </div>
-          <div
-            className={`sentinel sentinel--bottom ${
-              showSentinels ? "sentinel--show" : ""
-            }`}
-          ></div>
         </div>
       </main>
       <section className="otherStuff"></section>
@@ -71,6 +130,18 @@ function App() {
       >
         Show Sentinels
       </button>
+      <div
+        className={`sentinel sentinel--top ${
+          showSentinels ? "sentinel--show" : ""
+        }`}
+        ref={topSentinel}
+      ></div>
+      <div
+        className={`sentinel sentinel--bottom ${
+          showSentinels ? "sentinel--show" : ""
+        }`}
+        ref={bottomSentinel}
+      ></div>
     </>
   );
 }
