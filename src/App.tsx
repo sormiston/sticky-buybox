@@ -2,6 +2,8 @@ import { useState } from "react";
 import "./App.scss";
 
 function App() {
+  const [showSentinels, setShowSentinels] = useState(false);
+
   return (
     <>
       <header>
@@ -9,7 +11,11 @@ function App() {
       </header>
       <main>
         <div className="container">
-          <div className="sentinel sentinel--top"></div>
+          <div
+            className={`sentinel sentinel--top ${
+              showSentinels ? "sentinel--show" : ""
+            }`}
+          ></div>
           <div className="col colA">
             <h2 className="colA__start">Col A Start</h2>
             <span className="colA__foot">Col A Foot</span>
@@ -51,10 +57,20 @@ function App() {
             <hr />
             <span className="colB__foot">Col B Foot</span>
           </div>
-          <div className="sentinel sentinel--bottom"></div>
+          <div
+            className={`sentinel sentinel--bottom ${
+              showSentinels ? "sentinel--show" : ""
+            }`}
+          ></div>
         </div>
       </main>
       <section className="otherStuff"></section>
+      <button
+        className="devButton"
+        onClick={() => setShowSentinels((prev) => !prev)}
+      >
+        Show Sentinels
+      </button>
     </>
   );
 }

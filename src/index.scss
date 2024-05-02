@@ -9,6 +9,9 @@
   --accent-color: #4C8577;
   --text-color: #e8e6e3;
   --action-color: #ba2d0b;
+  --dev-ui-action-bg-color: #e77728;
+  --dev-ui-action-text-color: #4f290e;
+  --cta-tex-color: var(--text-color);
 
   color: var(--text-color);
   background-color: var(--primary-color);
@@ -74,11 +77,22 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 } */
 
+button {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+
+  &:active {
+    filter: brightness(0.85);
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     --text-color: #213547;
     --primary-color: #ffffff;
     --accent-color: #75b3a3;
+    --cta-text-color: var(--primary-color);
   }
 
 

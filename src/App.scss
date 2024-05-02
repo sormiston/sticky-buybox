@@ -17,7 +17,6 @@ main {
 
 .sentinel {
   position: fixed;
-
 }
 
 .container {
@@ -57,7 +56,6 @@ main {
 
   &__foot {
     z-index: 2;
-
   }
 }
 
@@ -77,12 +75,24 @@ hr {
   opacity: 0.6;
 }
 
+button.devButton {
+  position: fixed;
+  bottom: 16px;
+  font-size: 1.6rem;
+  padding: 0.4em 0.8em;
+  border-radius: 8px;
+  border: 1px solid var(--text-color);
+  background-color: var(--dev-ui-action-bg-color);
+  color: var(--dev-ui-action-text-color);
+  font-weight: 600;
+}
+
 button.CTA {
   font-size: 3.2rem;
   padding: 0.6em 1.2em;
   border-radius: 8px;
   background-color: var(--action-color);
-  cursor: pointer;
+  color: var(--cta-text-color);
 }
 
 section.otherStuff {
