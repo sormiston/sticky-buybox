@@ -1,7 +1,9 @@
 Presentational MVP:
-    ☐ Finish container styling
-    ☐ Prepare "below the fold" conditions on page
+    ✔ Finish container styling @done (02/05/2024, 21:25:04)
+    ✔ Prepare "below the fold" conditions on page @done (02/05/2024, 21:25:01)
+    ✘ dark / light mode @cancelled (02/05/2024, 21:35:10)
     ☐ Implement the solution
+    ☐ make component abstractions for clarity in App.tsx
 
 Going Beyond:
     ☐ mock async fetching for content / jaggy page load conditions
