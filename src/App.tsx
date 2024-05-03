@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import "./App.scss";
 
 function App() {
@@ -20,56 +20,72 @@ function App() {
   const bottomSentinel = useRef<HTMLDivElement>(null);
 
   // IO CALLBACK
-  const stickOrScroll = (entries: IntersectionObserverEntry[]) => {
-    entries.forEach((entry) => {
-      if (!container.current || !colB.current) return;
-      const isScrolledPastFold =
-        container.current.getBoundingClientRect().bottom < 0;
-      if (!entry.isIntersecting && !isScrolledPastFold) {
-        // stick
-        setColBPosition("sticky");
-        setColBTop(
-          scrollDirection === "up"
-            ? `${Math.min(entry.boundingClientRect.top, 175)}px` // disallow top of buybox to lag more than 175px behind viewport
-            : `${entry.boundingClientRect.top}px`
-        );
-      } else {
-        // scroll
-        setColBPosition("relative");
-        setColBTop(
-          `${
-            -1 *
-            (container.current.getBoundingClientRect().top -
-              entry.boundingClientRect.top)
-          }px`
-        );
-      }
-    });
-  };
+  const stickOrScroll = useCallback(
+    (scrollDir: "up" | "down") => (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        console.log("entry from " + scrollDir + " observer:", entry);
+        if (!container.current || !colB.current) return;
+        const isScrolledPastFold =
+          container.current.getBoundingClientRect().bottom < 0;
+        if (!entry.isIntersecting && !isScrolledPastFold) {
+          // stick
+          setColBPosition("sticky");
+          setColBTop(
+            scrollDir === "up"
+              ? `${Math.min(entry.boundingClientRect.top, 175)}px` // disallow top of buybox to lag more than 175px behind viewport
+              : `${entry.boundingClientRect.top}px`
+          );
+        } else {
+          // scroll
+          setColBPosition("relative");
+          setColBTop(
+            `${
+              -1 *
+              (container.current.getBoundingClientRect().top -
+                entry.boundingClientRect.top)
+            }px`
+          );
+        }
+      });
+    }
+  );
 
   // IO INSTANTIATION
   useEffect(() => {
+    if (downScrollIO || upScrollIO) return;
     if (topSentinel.current && bottomSentinel.current) {
       setDownScrollIO(
-        new IntersectionObserver(stickOrScroll, {
-          root: topSentinel.current,
+        new IntersectionObserver(stickOrScroll("down"), {
+          root: bottomSentinel.current,
         })
       );
       setUpScrollIO(
-        new IntersectionObserver(stickOrScroll, {
-          root: bottomSentinel.current,
+        new IntersectionObserver(stickOrScroll("up"), {
+          root: topSentinel.current,
         })
       );
     } else {
       console.error("missing refs!!");
     }
-  }, []);
+  }, [upScrollIO, downScrollIO, stickOrScroll]);
 
   // SCROLL LISTENER FOR DIRECTION
   let lastScrollTop = window.scrollY;
   window.addEventListener("scroll", () => {
-    setScrollDirection(window.scrollY > lastScrollTop ? "down" : "up");
+    const scrollDir = window.scrollY > lastScrollTop ? "down" : "up";
+    setScrollDirection(scrollDir);
     lastScrollTop = window.scrollY;
+
+    // OBSERVE
+    if (!downScrollIO || !upScrollIO || !colB.current) return;
+
+    if (scrollDir === "down") {
+      upScrollIO?.unobserve(colB.current);
+      downScrollIO.observe(colB.current);
+    } else if (scrollDir === "up") {
+      downScrollIO.unobserve(colB.current);
+      upScrollIO.observe(colB.current);
+    }
   });
 
   return (
