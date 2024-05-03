@@ -3,8 +3,14 @@ Presentational MVP:
     ✔ Prepare "below the fold" conditions on page @done (02/05/2024, 21:25:01)
     ✘ dark / light mode @cancelled (02/05/2024, 21:35:10)
     ☐ Implement the solution
-    ☐ make component abstractions for clarity in App.tsx
+    
+
+
+Performance study:
+    ☐ Branch the original solution for optimization work
+
 
 Going Beyond:
+    ☐ make component abstractions for clarity in App.tsx
     ☐ mock async fetching for content / jaggy page load conditions
     ☐ some height-adjusting state in Col B
