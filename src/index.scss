@@ -13,7 +13,7 @@
   --action-color: #ba2d0b;
   --dev-ui-action-bg-color: #e77728;
   --dev-ui-action-text-color: #4f290e;
-  --cta-tex-color: var(--text-color);
+  --cta-text-color: var(--text-color);
 
   color: var(--text-color);
   background-color: var(--primary-color);
@@ -60,24 +60,6 @@ h2 {
   font-size: 3.6rem;
   line-height: 1.2;
 }
-/* button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-} */
 
 button {
   cursor: pointer;

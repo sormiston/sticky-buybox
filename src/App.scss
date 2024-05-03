@@ -15,29 +15,6 @@ main {
   margin: calc(var(--header-height) + 48px) 0;
 }
 
-.sentinel {
-  position: fixed;
-  width: 100%;
-  height: 60px;
-  pointer-events: none;
-  z-index: 10;
-
-  &--top {
-    top: 0;
-    height: var(--header-height);
-  }
-
-  &--bottom {
-    bottom: 0;
-    height: 60px;
-  }
-
-  &--show {
-    background-color: var(--dev-ui-action-bg-color);
-    opacity: 0.3
-  }
-}
-
 .container {
   width: 100%;
   max-width: 1376px;
@@ -94,19 +71,19 @@ hr {
   opacity: 0.6;
 }
 
-button.devButton {
-  position: fixed;
-  bottom: 12px;
-  left: 24px;
-  font-size: 1.6rem;
-  padding: 0.4em 0.8em;
-  border-radius: 8px;
-  border: 1px solid var(--text-color);
-  background-color: var(--dev-ui-action-bg-color);
-  color: var(--dev-ui-action-text-color);
-  font-weight: 600;
-  z-index: 11;
-}
+// button.devButton {
+//   position: fixed;
+//   bottom: 12px;
+//   left: 24px;
+//   font-size: 1.6rem;
+//   padding: 0.4em 0.8em;
+//   border-radius: 8px;
+//   border: 1px solid var(--text-color);
+//   background-color: var(--dev-ui-action-bg-color);
+//   color: var(--dev-ui-action-text-color);
+//   font-weight: 600;
+//   z-index: 11;
+// }
 
 button.CTA {
   font-size: 3.2rem;

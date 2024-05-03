@@ -10,6 +10,9 @@ Performance study:
     ☐ Branch the original solution for optimization work
 
 
+Immediate improvements:
+    ☐ [IO on viewport]: less approximate calculations for sizing root bounds
+    
 Going Beyond:
     ☐ make component abstractions for clarity in App.tsx
     ☐ mock async fetching for content / jaggy page load conditions
