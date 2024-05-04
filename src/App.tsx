@@ -1,32 +1,38 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import "./App.scss";
 
 function App() {
   // STATE
-  const [showSentinels, setShowSentinels] = useState(false);
   const [colBPosition, setColBPosition] = useState<
     "sticky" | "relative" | "static"
   >("static");
   const [colBTop, setColBTop] = useState("0px");
-  const [scrollDirection, setScrollDirection] = useState<"up" | "down">("down");
-  const [downScrollIO, setDownScrollIO] =
-    useState<IntersectionObserver | null>();
-  const [upScrollIO, setUpScrollIO] = useState<IntersectionObserver | null>();
 
-  // REFS
+  // DOM REFS
   const container = useRef<HTMLDivElement>(null);
   const colB = useRef<HTMLDivElement>(null);
-  const topSentinel = useRef<HTMLDivElement>(null);
-  const bottomSentinel = useRef<HTMLDivElement>(null);
+
+  const upScrollIO = useRef<IntersectionObserver>(
+    new IntersectionObserver(stickOrScroll("up"), {
+      rootMargin: "0% 0% -88% 0%", // top 12% of viewport
+    })
+  );
+
+  const downScrollIO = useRef<IntersectionObserver>(
+    new IntersectionObserver(stickOrScroll("down"), {
+      rootMargin: "-90% 0% 0% 0%", // bottom 10% of viewport
+    })
+  );
 
   // IO CALLBACK
-  const stickOrScroll = useCallback(
-    (scrollDir: "up" | "down") => (entries: IntersectionObserverEntry[]) => {
+  function stickOrScroll(scrollDir: "up" | "down") {
+    return (entries: IntersectionObserverEntry[]) => {
       entries.forEach((entry) => {
         console.log("entry from " + scrollDir + " observer:", entry);
         if (!container.current || !colB.current) return;
+        const { top: containerTop, bottom: containerBottom } = container.current.getBoundingClientRect();
         const isScrolledPastFold =
-          container.current.getBoundingClientRect().bottom < 0;
+          containerBottom < 0;
         if (!entry.isIntersecting && !isScrolledPastFold) {
           // stick
           setColBPosition("sticky");
@@ -41,56 +47,47 @@ function App() {
           setColBTop(
             `${
               -1 *
-              (container.current.getBoundingClientRect().top -
+              (containerTop -
                 entry.boundingClientRect.top)
             }px`
           );
         }
       });
-    }
-  );
-
-  // IO INSTANTIATION
-  useEffect(() => {
-    if (downScrollIO || upScrollIO) return;
-    if (topSentinel.current && bottomSentinel.current) {
-      setDownScrollIO(
-        new IntersectionObserver(stickOrScroll("down"), {
-          root: bottomSentinel.current,
-        })
-      );
-      setUpScrollIO(
-        new IntersectionObserver(stickOrScroll("up"), {
-          root: topSentinel.current,
-        })
-      );
-    } else {
-      console.error("missing refs!!");
-    }
-  }, [upScrollIO, downScrollIO, stickOrScroll]);
+    };
+  }
 
   // SCROLL LISTENER FOR DIRECTION
-  let lastScrollTop = window.scrollY;
-  window.addEventListener("scroll", () => {
-    const scrollDir = window.scrollY > lastScrollTop ? "down" : "up";
-    setScrollDirection(scrollDir);
-    lastScrollTop = window.scrollY;
+  const lastScrollTop = useRef(window.scrollY);
+
+  useEffect(() => {
+    window.addEventListener("scroll", scrollListenerCallback, {
+      passive: true,
+    });
+    return () => {
+      window.removeEventListener("scroll", scrollListenerCallback);
+    };
+  });
+
+  function scrollListenerCallback() {
+    const scrollDir = window.scrollY > lastScrollTop.current ? "down" : "up";
+    // console.log("scrollDir:", scrollDir);
+    lastScrollTop.current = window.scrollY;
 
     // OBSERVE
-    if (!downScrollIO || !upScrollIO || !colB.current) return;
+    if (!colB.current) return;
 
     if (scrollDir === "down") {
-      upScrollIO?.unobserve(colB.current);
-      downScrollIO.observe(colB.current);
+      upScrollIO.current.unobserve(colB.current);
+      downScrollIO.current.observe(colB.current);
     } else if (scrollDir === "up") {
-      downScrollIO.unobserve(colB.current);
-      upScrollIO.observe(colB.current);
+      downScrollIO.current.unobserve(colB.current);
+      upScrollIO.current.observe(colB.current);
     }
-  });
+  }
 
   return (
     <>
-      <header style={{ opacity: showSentinels ? "0.15" : "1" }}>
+      <header>
         <h1 className="h1">2-Column Synchronized Scroll Container</h1>
       </header>
       <main>
@@ -100,7 +97,11 @@ function App() {
             <span className="colA__foot">Col A Foot</span>
           </div>
 
-          <div className="col colB" ref={colB}>
+          <div
+            className="col colB"
+            ref={colB}
+            style={{ position: colBPosition, top: colBTop }}
+          >
             <h2 className="colB__start">Col B Start</h2>
             <hr />
             <p className="colB__content">
@@ -140,24 +141,6 @@ function App() {
         </div>
       </main>
       <section className="otherStuff"></section>
-      <button
-        className="devButton"
-        onClick={() => setShowSentinels((prev) => !prev)}
-      >
-        Show Sentinels
-      </button>
-      <div
-        className={`sentinel sentinel--top ${
-          showSentinels ? "sentinel--show" : ""
-        }`}
-        ref={topSentinel}
-      ></div>
-      <div
-        className={`sentinel sentinel--bottom ${
-          showSentinels ? "sentinel--show" : ""
-        }`}
-        ref={bottomSentinel}
-      ></div>
     </>
   );
 }
