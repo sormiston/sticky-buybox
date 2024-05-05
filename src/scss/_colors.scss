@@ -1,0 +1,20 @@
+:root {
+  --primary-color: #242424;
+  --accent-color: #4c8577;
+  --text-color: #e8e6e3;
+  --action-color: #ba2d0b;
+  --dev-action-bg-color: #ea81e1;
+  --dev-action-text-color: #42223f;
+  --cta-text-color: var(--text-color);
+  --dev-caution-bg-color: #f26419;
+  --dev-caution-text-color: #4b1f07;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --text-color: #213547;
+    --primary-color: #ffffff;
+    --accent-color: #75b3a3;
+    --cta-text-color: var(--primary-color);
+  }
+}

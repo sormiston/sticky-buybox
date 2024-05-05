@@ -1,0 +1,17 @@
+@use "sass:list";
+
+@function gen-striped-gradient($colors, $rotation: 45) {
+  $gradient-string: "#{$rotation}deg";
+  $list-length: list.length($colors);
+
+  @for $i from 0 through 9 {
+    $color-list-idx: ($i % $list-length) + 1;
+    $gradient-string: #{$gradient-string} +
+      ", #{list.nth($colors, $color-list-idx)} #{$i * 10}%";
+    $gradient-string: #{$gradient-string} +
+      ", #{list.nth($colors, $color-list-idx)} #{($i + 1) * 10}%";
+  }
+
+  @return $gradient-string;
+}
+
