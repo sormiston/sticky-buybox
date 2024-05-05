@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import "./App.scss";
+import "./scss/App.scss";
 
 function App() {
   // STATE
@@ -7,6 +7,13 @@ function App() {
     "sticky" | "relative" | "static"
   >("static");
   const [colBTop, setColBTop] = useState("0px");
+  const [headerHide, setHeaderHide] = useState(true);
+  // Only needed for dev UI
+  const [topObserving, setTopObserving] = useState(false);
+  const [bottomObserving, setBottomObserving] = useState(false);
+  const [topRootIntersecting, setTopRootIntersecting] = useState(false);
+  const [bottomRootIntersecting, setBottomRootIntersecting] = useState(false);
+  const [isPastFold, setIsPastFold] = useState(false);
 
   // DOM REFS
   const container = useRef<HTMLDivElement>(null);
@@ -30,28 +37,30 @@ function App() {
       entries.forEach((entry) => {
         console.log("entry from " + scrollDir + " observer:", entry);
         if (!container.current || !colB.current) return;
-        const { top: containerTop, bottom: containerBottom } = container.current.getBoundingClientRect();
-        const isScrolledPastFold =
-          containerBottom < 0;
+        const { top: containerTop, bottom: containerBottom } =
+          container.current.getBoundingClientRect();
+        const isScrolledPastFold = containerBottom < 0;
         if (!entry.isIntersecting && !isScrolledPastFold) {
           // stick
           setColBPosition("sticky");
           setColBTop(
             scrollDir === "up"
-              ? `${Math.min(entry.boundingClientRect.top, 175)}px` // disallow top of buybox to lag more than 175px behind viewport
-              : `${entry.boundingClientRect.top}px`
+              ? `${Math.min(Math.round(entry.boundingClientRect.top), 150)}px` // disallow top of buybox to lag more than 175px behind viewport
+              : `${Math.round(entry.boundingClientRect.top)}px`
           );
         } else {
           // scroll
           setColBPosition("relative");
           setColBTop(
-            `${
-              -1 *
-              (containerTop -
-                entry.boundingClientRect.top)
-            }px`
+            `${-1 * Math.round(containerTop - entry.boundingClientRect.top)}px`
           );
         }
+
+        // DEV UI state only
+        setIsPastFold(isScrolledPastFold);
+        scrollDir === "up"
+          ? setTopRootIntersecting(entry.isIntersecting)
+          : setBottomRootIntersecting(entry.isIntersecting);
       });
     };
   }
@@ -83,11 +92,22 @@ function App() {
       downScrollIO.current.unobserve(colB.current);
       upScrollIO.current.observe(colB.current);
     }
+
+    // DEV UI state only
+    if (scrollDir === "down") {
+      setTopObserving(false);
+      setBottomObserving(true);
+    } else {
+      setTopObserving(true);
+      setBottomObserving(false);
+    }
   }
+
+  // DEV UI
 
   return (
     <>
-      <header>
+      <header className={`${headerHide ? "hide" : ""}`}>
         <h1 className="h1">2-Column Synchronized Scroll Container</h1>
       </header>
       <main>
@@ -141,6 +161,38 @@ function App() {
         </div>
       </main>
       <section className="otherStuff"></section>
+      <div className="devButtonBar">
+        <button
+          className="devButton"
+          onClick={() => setHeaderHide(!headerHide)}
+        >
+          {headerHide ? "Show" : "Hide"} Header
+        </button>
+      </div>
+      <div
+        className={`intersectionRoot intersectionRoot--top ${
+          topObserving ? "intersectionRoot--active" : ""
+        } ${topRootIntersecting ? "intersectionRoot--intersecting" : ""} ${
+          isPastFold ? "intersectionRoot--pastFold" : ""
+        }`}
+      >
+        {isPastFold ? (
+          <code className="codeReadout codeReadout--isPastFold">
+            isPastFold
+          </code>
+        ) : topObserving && (
+          <code className="codeReadout">{`ColB: { position: ${colBPosition}, top: ${colBTop} }`}</code>
+        )}
+      </div>
+      <div
+        className={`intersectionRoot intersectionRoot--bottom ${
+          bottomObserving ? "intersectionRoot--active" : ""
+        } ${bottomRootIntersecting ? "intersectionRoot--intersecting" : ""}`}
+      >
+        {bottomObserving && (
+          <code className="codeReadout">{`ColB: { position: ${colBPosition}, top: ${colBTop} }`}</code>
+        )}
+      </div>
     </>
   );
 }

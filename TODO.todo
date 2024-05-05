@@ -11,9 +11,10 @@ Performance study:
 
 
 Immediate improvements:
+    ☐ 
     ☐ [IO on viewport]: less approximate calculations for sizing root bounds
+    ☐ make component abstractions for clarity in App.tsx
     
 Going Beyond:
-    ☐ make component abstractions for clarity in App.tsx
     ☐ mock async fetching for content / jaggy page load conditions
     ☐ some height-adjusting state in Col B
