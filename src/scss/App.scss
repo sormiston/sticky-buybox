@@ -98,7 +98,7 @@ section.otherStuff {
   transform: translateY(-50%);
   left: 61px;
   z-index: 11;
-  background-color: var(--dev-ui-action-bg-color);
+  background-color: var(--dev-action-bg-color);
   opacity: 0.7;
   padding: 12px 16px;
   display: flex;
@@ -111,7 +111,7 @@ button.devButton {
   padding: 0.4em 0.8em;
   border-radius: 8px;
   border: 1px solid var(--text-color);
-  background-color: var(--dev-ui-action-bg-color);
+  background-color: var(--dev-action-bg-color);
   color: var(--dev-action-text-color);
   font-weight: 600;
 }
@@ -136,12 +136,10 @@ button.devButton {
 
   &--top {
     top: 0;
-    height: 12%;
   }
 
   &--bottom {
     bottom: 0;
-    height: 10%;
   }
 
   &--active {
