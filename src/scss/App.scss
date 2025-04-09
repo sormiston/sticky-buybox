@@ -1,4 +1,3 @@
-
 @use './_functions' as *;
 
 :root {
@@ -34,7 +33,7 @@ main {
   position: relative;
   padding: 0 24px;
 
-  [class$="__foot"] {
+  [class$='__foot'] {
     font-size: 2.4rem;
     line-height: 3;
   }
@@ -45,7 +44,7 @@ main {
   height: 2600px;
 
   &::after {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     opacity: 0.2;
@@ -124,7 +123,6 @@ button.devButton {
   transform: translateY(-50%);
   position: absolute;
   font-size: 3.2rem;
-
 }
 
 .intersectionRoot {
@@ -148,7 +146,9 @@ button.devButton {
 
   &--intersecting {
     border: 8px inset var(--dev-caution-text-color);
-    $gradient-string: gen-striped-gradient((var(--dev-caution-bg-color), var(--dev-caution-text-color)));
+    $gradient-string: gen-striped-gradient(
+      (var(--dev-caution-bg-color), var(--dev-caution-text-color))
+    );
     background: linear-gradient(#{$gradient-string});
   }
 
