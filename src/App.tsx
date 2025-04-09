@@ -1,6 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { isWhatPercentageOf } from './utils/index';
-
 import './scss/App.scss';
 
 const headerHeightFromCss = window
@@ -11,116 +9,101 @@ const TOP_OFFSET = parseInt(headerHeightFromCss) + 24;
 const BOTTOM_OFFSET = 50;
 
 function App() {
-  // STATE
-  const [colBPosition, setColBPosition] = useState<'sticky' | 'relative' | 'static'>('static');
-  const [colBTop, setColBTop] = useState('0px');
-  // Demo UI state
-  const [headerHide, setHeaderHide] = useState(true);
-  const [hideDemoUI, setHideDemoUI] = useState(false);
+  // CORE BUSINESS STATE
+  const [colBPosition, setColBPosition] = useState<'sticky' | 'relative' | 'static'>('relative');
+  const [colBTop, setColBTop] = useState<`${number}px`>('0px');
 
-  // Implementation values that need only exist in their observer callbacks,
-  // here elevated to state for Demo UI purposes
-  const [topObserving, setTopObserving] = useState(false);
-  const [bottomObserving, setBottomObserving] = useState(false);
-  const [topRootIntersecting, setTopRootIntersecting] = useState(false);
-  const [bottomRootIntersecting, setBottomRootIntersecting] = useState(false);
-  const [isPastFold, setIsPastFold] = useState(false);
+  // DEMO PURPOSE DEV UI STATE
+  const [headerHide, setHeaderHide] = useState<boolean>(true);
+  const [hideDemoUI, setHideDemoUI] = useState<boolean>(false);
+  const [topObserving, setTopObserving] = useState<boolean>(false);
+  const [bottomObserving, setBottomObserving] = useState<boolean>(false);
+  const [topMarginIntersecting, setTopMarginIntersecting] = useState<boolean>(false);
+  const [bottomMarginIntersecting, setBottomMarginIntersecting] = useState<boolean>(false);
 
   // DOM REFS
   const container = useRef<HTMLDivElement>(null);
   const colB = useRef<HTMLDivElement>(null);
 
-  // OBSERVERS
-  const topOffsetPctg = isWhatPercentageOf(TOP_OFFSET - 1, window.innerHeight);
-  const upScrollIO = useRef<IntersectionObserver>(
-    new IntersectionObserver(stickOrScrollSetter('up'), {
-      rootMargin: `0% 0% -${100 - topOffsetPctg}% 0%`, // top 63px
-    })
-  );
+  // CALCULATION REFS
+  const ticking = useRef<boolean>(false);
+  const lastScrollTop = useRef<number>(window.scrollY);
+  const lastScrollDir = useRef<undefined | 'up' | 'down'>(undefined);
 
-  const bottomOffsetPctg = isWhatPercentageOf(BOTTOM_OFFSET - 1, window.innerHeight);
-  const downScrollIO = useRef<IntersectionObserver>(
-    new IntersectionObserver(stickOrScrollSetter('down'), {
-      rootMargin: `-${100 - bottomOffsetPctg}% 0% 0% 0%`, // bottom 49px of my macbook viewport
-    })
-  );
-
-  // IO CALLBACK
-  function stickOrScrollSetter(scrollDir: 'up' | 'down') {
-    return (entries: IntersectionObserverEntry[]) => {
-      entries.forEach(entry => {
-        console.log("entry from " + scrollDir + " observer:", entry);
-        if (!container.current || !colB.current) return;
-
-        const { top: containerTop, bottom: containerBottom } =
-          container.current.getBoundingClientRect();
-        const isScrolledPastFold = containerBottom < 0;
-
-        if (!entry.isIntersecting && !isScrolledPastFold) {
-          // stick
-          setColBPosition('sticky');
-          if (scrollDir === 'up') {
-            setColBTop(`${TOP_OFFSET}px`);
-            // setColBTop(`${-1 * TOP_OFFSET}px`);
-          } else if (scrollDir === 'down') {
-            const currBottomOffset =
-              window.innerHeight - colB.current.getBoundingClientRect().bottom;
-            const adjustment = -1 * (BOTTOM_OFFSET - currBottomOffset);
-            setColBTop(`${Math.round(entry.boundingClientRect.top + adjustment)}px`);
-          }
-        } else {
-          // scroll
-          setColBPosition('relative');
-          setColBTop(`${-1 * Math.round(containerTop - entry.boundingClientRect.top)}px`);
-        }
-
-        // DEV UI state only
-        setIsPastFold(isScrolledPastFold);
-        scrollDir === 'up'
-          ? setTopRootIntersecting(entry.isIntersecting)
-          : setBottomRootIntersecting(entry.isIntersecting);
-      });
-    };
-  }
-
-  // SCROLL LISTENER FOR DIRECTION
-  const lastScrollTop = useRef(window.scrollY);
-
+  // SET SCROLL LISTENER
   useEffect(() => {
-    window.addEventListener('scroll', scrollListenerCallback, {
+    window.addEventListener('scroll', handleScroll, {
       passive: true,
     });
     return () => {
-      window.removeEventListener('scroll', scrollListenerCallback);
+      window.removeEventListener('scroll', handleScroll);
     };
   });
 
-  function scrollListenerCallback() {
-    const scrollDir = window.scrollY > lastScrollTop.current ? 'down' : 'up';
-    lastScrollTop.current = window.scrollY;
-
-    // OBSERVE
-    if (!colB.current) return;
-
-    if (scrollDir === 'down') {
-      upScrollIO.current.unobserve(colB.current);
-      downScrollIO.current.observe(colB.current);
-    } else if (scrollDir === 'up') {
-      downScrollIO.current.unobserve(colB.current);
-      upScrollIO.current.observe(colB.current);
-    }
-
-    // DEV UI state only
-    if (scrollDir === 'down') {
-      setTopObserving(false);
-      setBottomObserving(true);
-    } else {
-      setTopObserving(true);
-      setBottomObserving(false);
+  // Handle scroll event with requestAnimationFrame
+  function handleScroll() {
+    if (!ticking.current) {
+      requestAnimationFrame(() => {
+        scrollListenerCallback();
+        ticking.current = false;
+      });
+      ticking.current = true;
     }
   }
 
-  // DEV UI
+  // DEFINE SCROLL LISTENER CALLBACK
+  function scrollListenerCallback() {
+    const scrollDir = window.scrollY > lastScrollTop.current ? 'down' : 'up';
+
+    if (!colB.current) return;
+
+    let { top: colBTop, bottom: colBBottom } = colB.current.getBoundingClientRect();
+    colBTop = Math.round(colBTop);
+    colBBottom = Math.round(colBBottom);
+
+    if (scrollDir !== lastScrollDir.current) {
+      // get absolute difference of container top and colBTop
+      const topDiff = container.current
+        ? Math.abs(container.current.getBoundingClientRect().top - colBTop)
+        : 0;
+      setColBTop(`${Math.round(topDiff)}px`);
+      setColBPosition('relative');
+      console.log('scroll direction changed, setting colB position to relative');
+    } else if (scrollDir === 'down') {
+      if (
+        colBBottom < Math.round(window.innerHeight - BOTTOM_OFFSET) &&
+        colBPosition !== 'sticky'
+      ) {
+        console.log('bottom scroll, sticking colB');
+        const topStickValue =
+          -1 * (colB.current.getBoundingClientRect().height + BOTTOM_OFFSET - window.innerHeight);
+        setColBTop(`${Math.round(topStickValue)}px`);
+        setColBPosition('sticky');
+      }
+    } else if (scrollDir === 'up') {
+      if (colBTop >= TOP_OFFSET && colBPosition !== 'sticky') {
+        const topStickValue = TOP_OFFSET;
+        console.log('top scroll, sticking colB');
+        setColBTop(`${Math.round(topStickValue)}px`);
+        setColBPosition('sticky');
+      }
+    }
+
+    lastScrollTop.current = window.scrollY;
+    lastScrollDir.current = scrollDir;
+    // FOR DEV UI ONLY
+    setDevUI(scrollDir, colBTop, colBBottom);
+  }
+
+  // FOR DEV UI ONLY
+  function setDevUI(scrollDir: 'up' | 'down', colBTop: number, colBBottom: number) {
+    setTopObserving(scrollDir === 'up');
+    setBottomObserving(scrollDir === 'down');
+    setTopMarginIntersecting(colBTop >= Math.round(TOP_OFFSET) ? false : true);
+    setBottomMarginIntersecting(
+      colBBottom <= Math.round(window.innerHeight - BOTTOM_OFFSET) ? false : true
+    );
+  }
 
   return (
     <>
@@ -138,30 +121,17 @@ function App() {
             <h2 className="colB__start">Col B Start</h2>
             <hr />
             <p className="colB__content">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Pariatur ducimus eligendi,
-              dicta est esse at accusantium. Blanditiis cum similique obcaecati! Architecto,
-              repellat ab quisquam odit ipsam voluptatem doloribus animi assumenda?
-              <br />
-              <br />
-              <br />
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Totam fuga excepturi
-              dignissimos, assumenda magnam quae id quisquam molestiae, facilis quibusdam quo,
-              molestias accusamus voluptatum earum ipsum. Facilis repellendus beatae dolor.
-              <br />
-              <br />
-              <br />
-              Consequuntur placeat earum velit consequatur, illo ad nihil reprehenderit sunt error.
-              Architecto accusamus repudiandae vero veritatis ad doloremque sed, odit ipsam
-              assumenda necessitatibus voluptatibus nam non, possimus ipsum, quam consequatur.
-              <br />
-              <br />
-              <br />
-              Consequuntur placeat earum velit consequatur, illo ad nihil reprehenderit sunt error.
-              Architecto accusamus repudiandae vero veritatis ad doloremque sed, odit ipsam
-              assumenda necessitatibus voluptatibus nam non, possimus ipsum, quam consequatur.
-              <br />
-              <br />
-              <br />
+              {Array.from({ length: 4 }, (_, index) => (
+                <span key={index}>
+                  Lorem ipsum dolor sit amet consectetur adipisicing elit. Pariatur ducimus
+                  eligendi, dicta est esse at accusantium. Blanditiis cum similique obcaecati!
+                  Architecto, repellat ab quisquam odit ipsam voluptatem doloribus animi assumenda?
+                  <br />
+                  <br />
+                  <br />
+                </span>
+              ))}
+
               <button className="CTA">Call to Action</button>
             </p>
             <hr />
@@ -181,28 +151,23 @@ function App() {
       <div
         className={`intersectionRoot intersectionRoot--top ${
           topObserving ? 'intersectionRoot--active' : ''
-        } ${topRootIntersecting ? 'intersectionRoot--intersecting' : ''} ${
-          isPastFold ? 'intersectionRoot--pastFold' : ''
+        } ${topMarginIntersecting ? 'intersectionRoot--intersecting' : ''} 
         }`}
         style={{
-          height: `${topOffsetPctg}%`,
+          height: `${TOP_OFFSET}px`,
           display: hideDemoUI ? 'none' : 'block',
         }}
       >
-        {isPastFold ? (
-          <code className="codeReadout codeReadout--isPastFold">isPastFold</code>
-        ) : (
-          topObserving && (
-            <code className="codeReadout">{`ColB: { position: ${colBPosition}, top: ${colBTop} }`}</code>
-          )
+        {topObserving && (
+          <code className="codeReadout">{`ColB: { position: ${colBPosition}, top: ${colBTop} }`}</code>
         )}
       </div>
       <div
         className={`intersectionRoot intersectionRoot--bottom ${
           bottomObserving ? 'intersectionRoot--active' : ''
-        } ${bottomRootIntersecting ? 'intersectionRoot--intersecting' : ''}`}
+        } ${bottomMarginIntersecting ? 'intersectionRoot--intersecting' : ''}`}
         style={{
-          height: `${bottomOffsetPctg}%`,
+          height: `${BOTTOM_OFFSET}px`,
           display: hideDemoUI ? 'none' : 'block',
         }}
       >
